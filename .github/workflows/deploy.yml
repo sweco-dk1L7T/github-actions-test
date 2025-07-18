@@ -17,7 +17,6 @@ jobs:
         uses: actions/checkout@v4
 
       # Add build/test steps here
-
       - name: Deploy to production
         if: github.ref == 'refs/heads/main'
         run: echo "Deploying to production..."
@@ -29,3 +28,49 @@ jobs:
       - name: Deploy to test
         if: github.ref == 'refs/heads/test'
         run: echo "Deploying to test environment..."
+
+      # Set environment variable for production
+      - name: Set environment variable for production
+        if: github.ref == 'refs/heads/main'
+        run: echo "VITE_ENVIRONMENT=production" >> $GITHUB_ENV
+
+      # Set environment variable for QA
+      - name: Set environment variable for QA
+        if: github.ref == 'refs/heads/develop'
+        run: echo "VITE_ENVIRONMENT=qa" >> $GITHUB_ENV
+
+      # Set environment variable for test
+      - name: Set environment variable for test
+        if: github.ref == 'refs/heads/test'
+        run: echo "VITE_ENVIRONMENT=test" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # Deploy to GitHub Pages (to different branches)
+      - name: Deploy to GitHub Pages (main)
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages-main
+
+      - name: Deploy to GitHub Pages (develop)
+        if: github.ref == 'refs/heads/develop'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages-develop
+
+      - name: Deploy to GitHub Pages (test)
+        if: github.ref == 'refs/heads/test'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages-test
